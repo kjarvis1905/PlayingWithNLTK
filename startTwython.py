@@ -1,5 +1,6 @@
 import keyring
 import twython
+import numpy
 
 def startTwython():
     twi = twython.Twython(
