@@ -1,6 +1,19 @@
 import keyring
 import twython
 import numpy
+import pandas as pd
+from bs4 import BeautifulSoup
+import urllib3
+
+mps_list_url = "https://beta.parliament.uk/houses/1AFu55Hs/members/current"
+
+def makeSoup(url):
+    http = urllib3.PoolManager()
+    r = http.request("GET", url)
+    return BeautifulSoup(r.data)
+
+def getMPHTTPList(soup):
+    soup.find_all("ul", "list--block")
 
 def startTwython():
     twi = twython.Twython(
@@ -11,8 +24,14 @@ def startTwython():
     )
     return twi
 
+def getMPsHandles(twi):
+    return twi.get_list_members(slug="UKMPs", owner_screen_name = "tweetminster", count=1000)
+
+def makeMPsDF(twi):
+    return pd.DataFrame(getMPsHandles(twi))
+
+
 if __name__ == "__main__":
     twi = startTwython()
-    twitterUser = twi.lookup_user(screen_name="potus44")
-    userTweets = twi.get_user_timeline(screen_name="potus44", count=10)
-    print("User "+ twitterUser[0]["name"] + " has " + str(twitterUser[0]["friends_count"]) + " friends and " + str(twitterUser[0]["followers_count"]) + " followers.")
+    mp_df = makeMPsDF(twi)
+    mp_df[["name", "screen_name", "followers_count"]].sort_values("followers_count", ascending=False).head(15)
